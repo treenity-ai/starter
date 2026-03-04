@@ -1,0 +1,7 @@
+{
+  "extends": "./engine/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": ["engine/core/src", "engine/packages/*/src", "engine/mods/*/"]
+}

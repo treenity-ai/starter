@@ -1,0 +1,13 @@
+{
+  "$path": "/demo",
+  "$type": "dir",
+  "metadata": {
+    "$type": "metadata",
+    "title": "Demo",
+    "description": "Welcome to Treenity"
+  },
+  "counter": {
+    "$type": "counter",
+    "count": 0
+  }
+}

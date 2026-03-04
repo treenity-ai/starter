@@ -1,0 +1,9 @@
+{
+  "$path": "/",
+  "$type": "root",
+  "$acl": [
+    { "g": "public", "p": 1 },
+    { "g": "authenticated", "p": 9 },
+    { "g": "admins", "p": 15 }
+  ]
+}

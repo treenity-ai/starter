@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "engine/core",
+    "engine/packages/*",
+    "engine/mods/*"
+  ],
+  "scripts": {
+    "dev:server": "tsx --watch engine/core/src/server/main.ts root.json",
+    "dev:front": "npm run dev -w @treenity/react",
+    "schema": "tsx engine/core/src/schema/extract-schemas.ts engine/mods engine/packages",
+    "test": "npm test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "onnxruntime-node": "1.24.2"
+  }
+}

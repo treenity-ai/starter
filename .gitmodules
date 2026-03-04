@@ -1,0 +1,3 @@
+[submodule "engine"]
+	path = engine
+	url = git@github.com-krizka:treenity-ai/treenity.git

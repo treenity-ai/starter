@@ -1,0 +1,12 @@
+{
+  "$path": "/",
+  "$type": "root",
+  "$acl": [
+    { "g": "public", "p": 1 },
+    { "g": "authenticated", "p": 9 },
+    { "g": "admins", "p": 15 }
+  ],
+  "mount": { "$type": "t.mount.overlay", "layers": ["base", "work"] },
+  "base": { "$type": "t.mount.fs", "root": "data/base" },
+  "work": { "$type": "t.mount.fs", "root": "data/work" }
+}
