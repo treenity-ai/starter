@@ -7,10 +7,14 @@
     "engine/mods/*"
   ],
   "scripts": {
-    "dev:server": "tsx --watch engine/core/src/server/main.ts root.json",
-    "dev:front": "npm run dev -w @treenity/react",
+    "dev:starter:server": "tsx engine/core/src/server/main.ts root.json",
+    "dev:starter:front": "npm run dev -w @treenity/react",
     "schema": "tsx engine/core/src/schema/extract-schemas.ts engine/mods engine/packages",
     "test": "npm test --workspaces --if-present"
+  },
+  "dependencies": {
+    "@treenity/core": "3.0.0",
+    "@treenity/react": "3.0.0"
   },
   "devDependencies": {
     "tsx": "^4.21.0",
