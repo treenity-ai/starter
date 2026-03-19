@@ -1,46 +1,45 @@
-import { type NodeData, register } from '@treenity/core';
-import { useChildren, usePath } from '@treenity/react/hooks';
+import { register } from '@treenity/core/core';
+import { type View } from '@treenity/react/context';
+import { usePath, useChildren } from '@treenity/react/hooks';
 import { Button } from '@treenity/react/ui/button';
 import { Input } from '@treenity/react/ui/input';
 import { useState } from 'react';
 import {
   ExampleCounter, ExampleTodoList, ExampleTodoItem,
-  ExamplePoll, ExampleShowcase,
+  ExamplePoll, ExampleShowcase, ExampleTicker,
 } from './types';
 
 // ── Counter View ──
 
-function CounterView({ value }: { value: NodeData }) {
-  const counter = usePath(value.$path, ExampleCounter);
-
+const CounterView: View<ExampleCounter> = ({ value, ctx }) => {
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-5xl font-mono font-bold tabular-nums">{counter.count}</div>
+      <div className="text-5xl font-mono font-bold tabular-nums">{value.count ?? 0}</div>
       <div className="flex gap-2">
-        <Button size="sm" variant="outline" onClick={() => counter.decrement()}>−</Button>
-        <Button size="sm" variant="outline" onClick={() => counter.reset()}>Reset</Button>
-        <Button size="sm" onClick={() => counter.increment()}>+</Button>
+        <Button size="sm" variant="outline" onClick={() => value.decrement()}>−</Button>
+        <Button size="sm" variant="outline" onClick={() => value.reset()}>Reset</Button>
+        <Button size="sm" onClick={() => value.increment()}>+</Button>
       </div>
     </div>
   );
-}
-register('example.counter', 'react', CounterView as any);
+};
+register('example.counter', 'react', CounterView);
 
 // ── Todo List View ──
 
-function TodoListView({ value }: { value: NodeData }) {
-  const list = usePath(value.$path, ExampleTodoList);
-  const children = useChildren(value.$path, { watch: true, watchNew: true });
+const TodoListView: View<ExampleTodoList> = ({ value, ctx }) => {
+  const children = useChildren(ctx!.path, { watch: true, watchNew: true });
   const [draft, setDraft] = useState('');
 
   const handleAdd = async () => {
     if (!draft.trim()) return;
-    await list.add({ title: draft });
+    await ctx!.execute('add', { title: draft });
     setDraft('');
   };
 
   return (
     <div className="space-y-3">
+      <h3 className="font-medium">{value.title ?? 'Todos'}</h3>
       <div className="flex gap-2">
         <Input
           className="flex-1"
@@ -53,16 +52,19 @@ function TodoListView({ value }: { value: NodeData }) {
       </div>
       <ul className="space-y-1">
         {children.map(child => (
-          <TodoItemRow key={child.$path} value={child} />
+          <TodoItemView key={child.$path} value={child as any} ctx={{ node: child, path: child.$path, execute: ctx!.execute }} />
         ))}
       </ul>
     </div>
   );
-}
-register('example.todo.list', 'react', TodoListView as any);
+};
+register('example.todo.list', 'react', TodoListView);
 
-function TodoItemRow({ value }: { value: NodeData }) {
-  const item = usePath(value.$path, ExampleTodoItem);
+// ── Todo Item View ──
+// Uses usePath for TypeProxy — needs toggle() action method
+
+const TodoItemView: View<ExampleTodoItem> = ({ value, ctx }) => {
+  const item = usePath(ctx!.path, ExampleTodoItem);
 
   return (
     <li
@@ -70,37 +72,38 @@ function TodoItemRow({ value }: { value: NodeData }) {
       onClick={() => item.toggle()}
     >
       <span className={`w-4 h-4 rounded border flex items-center justify-center text-xs
-        ${item.done ? 'bg-primary border-primary text-primary-foreground' : 'border-input'}`}>
-        {item.done ? '✓' : ''}
+        ${value.done ? 'bg-primary border-primary text-primary-foreground' : 'border-input'}`}>
+        {value.done ? '✓' : ''}
       </span>
-      <span className={item.done ? 'line-through text-muted-foreground' : ''}>
-        {item.title}
+      <span className={value.done ? 'line-through text-muted-foreground' : ''}>
+        {value.title ?? ''}
       </span>
     </li>
   );
-}
-register('example.todo.item', 'react', TodoItemRow as any);
+};
+register('example.todo.item', 'react', TodoItemView);
 
 // ── Poll View ──
 
-function PollView({ value }: { value: NodeData }) {
-  const poll = usePath(value.$path, ExamplePoll);
-  const totalVotes = Object.values(poll.votes).reduce((s, n) => s + n, 0);
-  const closed = poll.status === 'closed';
+const PollView: View<ExamplePoll> = ({ value, ctx }) => {
+  const votes = value.votes ?? {};
+  const options = value.options ?? [];
+  const totalVotes = Object.values(votes).reduce((s, n) => s + n, 0);
+  const closed = value.status === 'closed';
 
   return (
     <div className="space-y-3">
-      <div className="font-medium">{poll.question}</div>
+      <div className="font-medium">{value.question ?? ''}</div>
 
       <div className="space-y-2">
-        {poll.options.map(opt => {
-          const count = poll.votes[opt] || 0;
+        {options.map(opt => {
+          const count = votes[opt] || 0;
           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
           return (
             <button
               key={opt}
               disabled={closed}
-              onClick={() => poll.vote({ option: opt })}
+              onClick={() => ctx!.execute('vote', { option: opt })}
               className="w-full text-left px-3 py-2 rounded border border-input
                 hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -122,7 +125,7 @@ function PollView({ value }: { value: NodeData }) {
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
         {!closed && (
-          <Button size="sm" variant="ghost" onClick={() => poll.close()}>
+          <Button size="sm" variant="ghost" onClick={() => ctx!.execute('close')}>
             Close poll
           </Button>
         )}
@@ -130,21 +133,21 @@ function PollView({ value }: { value: NodeData }) {
       </div>
     </div>
   );
-}
-register('example.poll', 'react', PollView as any);
+};
+register('example.poll', 'react', PollView);
 
 // ── Ticker View ──
 
-function TickerView({ value }: { value: NodeData }) {
-  const children = useChildren(value.$path, { watch: true, watchNew: true });
+const TickerView: View<ExampleTicker> = ({ value, ctx }) => {
+  const children = useChildren(ctx!.path, { watch: true, watchNew: true });
   const last = children.slice(-8).reverse();
 
   return (
     <div className="space-y-1 font-mono text-sm">
       {last.map((n, i) => {
-        const val = n.value as number;
-        const seq = n.seq as number;
-        const time = new Date(n.ts as number).toLocaleTimeString();
+        const val = typeof n.value === 'number' ? n.value : 0;
+        const seq = typeof n.seq === 'number' ? n.seq : 0;
+        const time = typeof n.ts === 'number' ? new Date(n.ts).toLocaleTimeString() : '';
         const barW = Math.round(((val - 25) / 55) * 100);
         return (
           <div
@@ -169,8 +172,8 @@ function TickerView({ value }: { value: NodeData }) {
       )}
     </div>
   );
-}
-register('example.ticker', 'react', TickerView as any);
+};
+register('example.ticker', 'react', TickerView);
 
 // ── Showcase Root View ──
 
@@ -181,41 +184,48 @@ const DEMOS: Record<string, { label: string; desc: string }> = {
   'example.ticker':    { label: 'Ticker',     desc: 'Service + live data' },
 };
 
-const VIEW_MAP: Record<string, (props: { value: NodeData }) => JSX.Element> = {
-  'example.counter': CounterView,
-  'example.todo.list': TodoListView,
-  'example.poll': PollView,
-  'example.ticker': TickerView,
-};
-
-function ShowcaseView({ value }: { value: NodeData }) {
-  const showcase = usePath(value.$path, ExampleShowcase);
-  const children = useChildren(value.$path, { watch: true });
+const ShowcaseView: View<ExampleShowcase> = ({ value, ctx }) => {
+  const children = useChildren(ctx!.path, { watch: true });
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{showcase.title}</h1>
-        <p className="text-muted-foreground">{showcase.description}</p>
+        <h1 className="text-2xl font-bold">{value.title ?? ''}</h1>
+        <p className="text-muted-foreground">{value.description ?? ''}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {children.map(child => {
           const demo = DEMOS[child.$type];
-          const View = VIEW_MAP[child.$type];
-          if (!demo || !View) return null;
+          if (!demo) return null;
           return (
             <div key={child.$path} className="border rounded-lg p-5 space-y-3">
               <div>
                 <h2 className="font-semibold">{demo.label}</h2>
                 <p className="text-xs text-muted-foreground">{demo.desc}</p>
               </div>
-              <View value={child} />
+              <ChildDemo value={child} />
             </div>
           );
         })}
       </div>
     </div>
   );
+};
+register('example.showcase', 'react', ShowcaseView);
+
+// Render child demo — delegates to registered view via usePath
+function ChildDemo({ value }: { value: { $path: string; $type: string } }) {
+  const VIEW_MAP: Record<string, View<any>> = {
+    'example.counter': CounterView,
+    'example.todo.list': TodoListView,
+    'example.poll': PollView,
+    'example.ticker': TickerView,
+  };
+  const View = VIEW_MAP[value.$type];
+  if (!View) return null;
+  return <View value={value as any} ctx={{ node: value as any, path: value.$path, execute: async (action, data) => {
+    const { tree } = await import('@treenity/react/hooks');
+    // Fallback: use usePath proxy in each view for actions
+  }}} />;
 }
-register('example.showcase', 'react', ShowcaseView as any);

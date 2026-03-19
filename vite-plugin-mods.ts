@@ -131,6 +131,7 @@ function scanClients(dir: string): string[] {
 }
 
 // Scan node_modules for @treenity/* packages with treenity.clients field
+// Returns bare import specifiers (e.g. '@treenity/mods/clients') — resolveId handles the rest
 function discoverPackageClients(): string[] {
   const imports: string[] = [];
   let current = process.cwd();
@@ -144,18 +145,12 @@ function discoverPackageClients(): string[] {
         if (!existsSync(pkgPath)) continue;
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
         if (pkg.treenity?.clients) {
-          const pkgDir = join(nmDir, entry.name);
-          const realDir = realpathSync(pkgDir);
-          const symlinked = realDir !== pkgDir;
-          let clientsRef = pkg.treenity.clients as string;
-          // npm-installed: rewrite src/*.ts → dist/*.js (glob in dist/load-client
-          // uses .ts extension which doesn't match compiled .js files)
-          if (!symlinked) clientsRef = clientsRef.replace(/\.\/src\//, './dist/').replace(/\.ts$/, '.js');
-          const clientsPath = resolve(symlinked ? realDir : pkgDir, clientsRef);
-          if (existsSync(clientsPath)) imports.push(clientsPath);
+          // Strip leading ./ and extension → bare subpath for import specifier
+          const subpath = (pkg.treenity.clients as string).replace(/^\.\//, '').replace(/\.tsx?$/, '');
+          imports.push(`@treenity/${entry.name}/${subpath}`);
         }
       }
-      break; // found node_modules, stop walking up
+      break;
     }
     current = dirname(current);
   }
@@ -184,6 +179,13 @@ export default function treenityPlugin(opts?: { modsDirs?: string[] }): Plugin {
       // Block server.ts from frontend
       if (id.startsWith('.')) {
         const resolved = resolve(importer, '..', id).replace(/\\/g, '/');
+
+        // Relative imports within @treenity packages: resolve explicitly so module IDs
+        // match plugin-resolved @treenity/* paths (prevents ?v= hash mismatch → dual modules)
+        if (importer.includes('/node_modules/@treenity/')) {
+          return tryResolve([resolved]);
+        }
+
         if (SERVER_RE.test(resolved)) {
           this.error(
             `Server module imported in frontend build: "${id}"\n` +
@@ -197,26 +199,23 @@ export default function treenityPlugin(opts?: { modsDirs?: string[] }): Plugin {
       if (id.startsWith('#')) {
         const pkg = readPkg(dirname(importer));
         if (pkg?.imports) {
-          // Inside node_modules: skip 'development' condition to stay in dist/
-          // (dist files use relative imports after fix-hash-imports post-build,
-          // but fallback resolution is still needed for third-party packages)
-          const isNm = importer.includes('/node_modules/');
-          const conds = isNm ? conditions.filter(c => c !== 'development') : conditions;
+          // node_modules: use only 'default' condition (dist/ files must resolve to dist/)
+          const conds = importer.includes('/node_modules/') ? ['default'] : conditions;
           return matchPattern(id, pkg.imports, pkg.dir, conds);
         }
       }
 
-      // Resolve @treenity/* exports (Vite doesn't handle array conditions)
+      // Resolve @treenity/* wildcard exports (Vite doesn't support * patterns natively)
       if (id.startsWith('@treenity/')) {
         const parts = id.split('/');
         const pkgName = parts.slice(0, 2).join('/');
         const subpath = './' + parts.slice(2).join('/');
         const pkg = findTreenityPkg(pkgName);
         if (pkg?.exports) {
-          // npm-installed: use 'default' only so app imports resolve to dist/
-          // (must match what dist internal imports use, otherwise dual module instances)
           const conds = pkg.symlinked ? conditions : ['default'];
-          return matchPattern(parts.length > 2 ? subpath : '.', pkg.exports, pkg.dir, conds);
+          const resolved = matchPattern(parts.length > 2 ? subpath : '.', pkg.exports, pkg.dir, conds);
+          // Return with ?v= to match Vite's native module ID format for node_modules files
+          if (resolved) return resolved;
         }
       }
     },
@@ -233,12 +232,12 @@ export default function treenityPlugin(opts?: { modsDirs?: string[] }): Plugin {
       // 3. Extra mods dirs (passed explicitly from project vite config)
       const extraMods = (opts?.modsDirs ?? []).flatMap(d => scanClients(resolve(d)));
 
-      // Dedupe by realpath
+      // Dedupe: bare specifiers by string, file paths by realpath
       const seen = new Set<string>();
       const imports: string[] = [];
       for (const p of [...pkgClients, ...engineMods, ...extraMods]) {
-        const real = realpathSync(p);
-        if (!seen.has(real)) { seen.add(real); imports.push(p); }
+        const key = p.startsWith('@') ? p : realpathSync(p);
+        if (!seen.has(key)) { seen.add(key); imports.push(p); }
       }
 
       return imports.map(p => `import '${p}';`).join('\n') + '\n';

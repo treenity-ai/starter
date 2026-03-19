@@ -1,9 +1,9 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import treenityPlugin from './vite-plugin-mods';
-import { treenityServer } from './vite-plugin-treenity';
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { resolve } from 'node:path'
+import { defineConfig } from 'vite'
+import treenityPlugin from '@treenity/react/vite-plugin-treenity'
+import { treenityServer } from './vite-plugin-treenity'
 
 export default defineConfig({
   resolve: {
@@ -16,14 +16,13 @@ export default defineConfig({
     react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
   ],
   optimizeDeps: {
-    exclude: ['@treenity/core', '@treenity/mods'],
     include: [
-      'use-sync-external-store/shim',
-      'use-sync-external-store/shim/with-selector',
+      'use-sync-external-store/shim', 'use-sync-external-store/shim/with-selector',
       'react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime',
       'immer', 'valtio', 'dayjs', 'sift',
-      '@tanstack/react-query',
-      '@trpc/client',
+      '@tanstack/react-query', '@trpc/client',
+      '@tiptap/react', 'react-grid-layout',
+      'highlight.js', 'highlight.js/lib/core', 'lowlight',
     ],
   },
   server: {
