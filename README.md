@@ -1,36 +1,37 @@
 # Treenity Starter
 
-Example project using [Treenity](https://github.com/treenity-ai/treenity) engine.
+A typed tree runtime where AI agents operate safely.
 
 ## Quick Start
 
 ```bash
-git clone --recurse-submodules https://github.com/treenity-ai/starter.git
+git clone https://github.com/treenity-ai/starter.git
 cd starter
 npm install
-npm run dev:server
-# In another terminal:
-npm run dev:front
+npm run dev
 ```
 
 Open http://localhost:3210
+
+Single process: Vite 8 frontend + Treenity server on :3211.
 
 ## Structure
 
 ```
 starter/
-├── engine/          ← git submodule (treenity engine)
 ├── data/base/       seed tree (FS mount)
+├── data/work/       runtime data (overlay, gitignored)
+├── mods/            local mods
+├── src/main.tsx     frontend entry
 ├── root.json        server config
-└── package.json     workspaces into engine/*
+├── vite.config.ts   Vite + Treenity plugin
+└── package.json     npm deps: @treenity/core, react, mods
 ```
 
-## Adding Your Own Mods
+## Adding Mods
 
-1. Create `mods/` directory
-2. Add `"mods/*"` to `workspaces` in `package.json`
-3. Create your mod (see [engine docs](https://github.com/treenity-ai/treenity/tree/main/docs))
+Create a mod in `mods/your-mod/` with `types.ts`, `service.ts`, `client.ts`. Server auto-discovers mods on boot.
 
 ## License
 
-MIT
+FSL-1.1-MIT
