@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "VITE_DEV_LOGIN=1 tsx --conditions development node_modules/.bin/vite"
+    "dev": "VITE_DEV_LOGIN=1 tsx --conditions development node_modules/.bin/vite",
+    "clean": "rm -rf node_modules/.vite"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.79",

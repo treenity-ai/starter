@@ -1,9 +1,9 @@
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
-import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
-import treenityPlugin from './vite-plugin-mods'
-import { treenityServer } from './vite-plugin-treenity'
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import treenityPlugin from './vite-plugin-mods';
+import { treenityServer } from './vite-plugin-treenity';
 
 export default defineConfig({
   resolve: {
@@ -11,7 +11,7 @@ export default defineConfig({
   },
   plugins: [
     treenityServer(),
-    treenityPlugin({ modsDirs: [resolve(import.meta.dirname, 'mods')] }),
+    treenityPlugin({ modsDirs: [resolve(import.meta.dirname, 'mods'), resolve(import.meta.dirname, 'engine/mods')] }),
     tailwindcss(),
     react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
   ],
