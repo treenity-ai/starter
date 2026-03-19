@@ -1,13 +1,17 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import treenityPlugin from './vite-plugin-mods'
 import { treenityServer } from './vite-plugin-treenity'
 
 export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   plugins: [
     treenityServer(),
-    treenityPlugin(),
+    treenityPlugin({ modsDirs: [resolve(import.meta.dirname, 'mods')] }),
     tailwindcss(),
     react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
   ],
