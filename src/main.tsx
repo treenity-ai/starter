@@ -1,0 +1,1 @@
+import '@treenity/react/main'

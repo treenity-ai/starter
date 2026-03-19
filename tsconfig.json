@@ -1,7 +1,14 @@
 {
-  "extends": "./engine/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "."
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "rootDir": ".",
+    "outDir": "dist"
   },
-  "include": ["engine/core/src", "engine/packages/*/src", "engine/mods/*/"]
+  "include": ["src"]
 }
