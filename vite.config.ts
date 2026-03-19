@@ -16,7 +16,7 @@ export default defineConfig({
     react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
   ],
   optimizeDeps: {
-    exclude: ['@treenity/core', '@treenity/react', '@treenity/mods'],
+    exclude: ['@treenity/core', '@treenity/mods'],
     include: [
       'use-sync-external-store/shim',
       'use-sync-external-store/shim/with-selector',
