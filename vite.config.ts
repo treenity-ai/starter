@@ -20,7 +20,7 @@ export default defineConfig({
     include: [
       'use-sync-external-store/shim',
       'use-sync-external-store/shim/with-selector',
-      'react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime',
+      'react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime',
       'immer', 'valtio', 'dayjs', 'sift',
       '@tanstack/react-query',
       '@trpc/client',
