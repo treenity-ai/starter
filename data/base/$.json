@@ -1,6 +1,6 @@
 {
   "$path": "/",
-  "$type": "root",
+  "$type": "metatron.config",
   "$acl": [
     { "g": "public", "p": 1 },
     { "g": "authenticated", "p": 9 },

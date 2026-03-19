@@ -37,9 +37,9 @@ function readPkg(startDir: string) {
 }
 
 // Cache for @treenity/* package dirs
-const treenityPkgCache = new Map<string, { dir: string; exports: FieldMap } | null>();
+const treenityPkgCache = new Map<string, { dir: string; exports: FieldMap; symlinked: boolean } | null>();
 
-function findTreenityPkg(name: string): { dir: string; exports: FieldMap } | null {
+function findTreenityPkg(name: string): { dir: string; exports: FieldMap; symlinked: boolean } | null {
   if (treenityPkgCache.has(name)) return treenityPkgCache.get(name)!;
 
   // Walk up from CWD to find node_modules/@treenity/<name>
@@ -51,7 +51,8 @@ function findTreenityPkg(name: string): { dir: string; exports: FieldMap } | nul
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
       // Follow symlink to real path for resolution
       const realDir = realpathSync(pkgDir);
-      const result = pkg.exports ? { dir: realDir, exports: pkg.exports as FieldMap } : null;
+      const symlinked = realDir !== pkgDir;
+      const result = pkg.exports ? { dir: realDir, exports: pkg.exports as FieldMap, symlinked } : null;
       treenityPkgCache.set(name, result);
       return result;
     }
@@ -143,8 +144,14 @@ function discoverPackageClients(): string[] {
         if (!existsSync(pkgPath)) continue;
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
         if (pkg.treenity?.clients) {
-          const realDir = realpathSync(join(nmDir, entry.name));
-          const clientsPath = resolve(realDir, pkg.treenity.clients);
+          const pkgDir = join(nmDir, entry.name);
+          const realDir = realpathSync(pkgDir);
+          const symlinked = realDir !== pkgDir;
+          let clientsRef = pkg.treenity.clients as string;
+          // npm-installed: rewrite src/*.ts → dist/*.js (glob in dist/load-client
+          // uses .ts extension which doesn't match compiled .js files)
+          if (!symlinked) clientsRef = clientsRef.replace(/\.\/src\//, './dist/').replace(/\.ts$/, '.js');
+          const clientsPath = resolve(symlinked ? realDir : pkgDir, clientsRef);
           if (existsSync(clientsPath)) imports.push(clientsPath);
         }
       }
@@ -189,7 +196,14 @@ export default function treenityPlugin(opts?: { modsDirs?: string[] }): Plugin {
       // Resolve # imports via nearest package.json imports field
       if (id.startsWith('#')) {
         const pkg = readPkg(dirname(importer));
-        if (pkg?.imports) return matchPattern(id, pkg.imports, pkg.dir, conditions);
+        if (pkg?.imports) {
+          // Inside node_modules: skip 'development' condition to stay in dist/
+          // (dist files use relative imports after fix-hash-imports post-build,
+          // but fallback resolution is still needed for third-party packages)
+          const isNm = importer.includes('/node_modules/');
+          const conds = isNm ? conditions.filter(c => c !== 'development') : conditions;
+          return matchPattern(id, pkg.imports, pkg.dir, conds);
+        }
       }
 
       // Resolve @treenity/* exports (Vite doesn't handle array conditions)
@@ -199,7 +213,10 @@ export default function treenityPlugin(opts?: { modsDirs?: string[] }): Plugin {
         const subpath = './' + parts.slice(2).join('/');
         const pkg = findTreenityPkg(pkgName);
         if (pkg?.exports) {
-          return matchPattern(parts.length > 2 ? subpath : '.', pkg.exports, pkg.dir, conditions);
+          // npm-installed: use 'default' only so app imports resolve to dist/
+          // (must match what dist internal imports use, otherwise dual module instances)
+          const conds = pkg.symlinked ? conditions : ['default'];
+          return matchPattern(parts.length > 2 ? subpath : '.', pkg.exports, pkg.dir, conds);
         }
       }
     },
