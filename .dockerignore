@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+.git
+**/.git
+dist-front
+data/work
+*.log
+*.tgz
+*.md
