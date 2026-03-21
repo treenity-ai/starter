@@ -4,6 +4,7 @@ node_modules
 **/.git
 dist-front
 data/work
+engine
 *.log
 *.tgz
 *.md

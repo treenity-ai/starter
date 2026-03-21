@@ -10,7 +10,7 @@
     "@anthropic-ai/claude-agent-sdk": "^0.2.79",
     "@treenity/core": "^3.0.8",
     "@treenity/mods": "^3.0.9",
-    "@treenity/react": "file:../core/engine/packages/react/treenity-react-3.0.9.tgz"
+    "@treenity/react": "^3.0.10"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",

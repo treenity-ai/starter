@@ -14,7 +14,7 @@ COPY . .
 # Build frontend
 RUN npx vite build --outDir dist-front
 
-# Server entry: start treenity + serve static
+# Server entry
 ENV PORT=3211
 ENV STATIC_DIR=/app/dist-front
 EXPOSE 3211
