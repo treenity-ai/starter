@@ -13,11 +13,13 @@ COPY . .
 
 # Build frontend
 RUN npx vite build --outDir dist-front
+RUN chmod +x entrypoint.sh
 
-# Server entry
+# Tenant mods dir scanned at runtime
 ENV PORT=3211
 ENV STATIC_DIR=/app/dist-front
+ENV MODS_DIR=/app/data/mods
 EXPOSE 3211
 VOLUME /app/data
 
-CMD ["tsx", "node_modules/@treenity/core/src/server/main.ts", "root.json"]
+CMD ["./entrypoint.sh"]
