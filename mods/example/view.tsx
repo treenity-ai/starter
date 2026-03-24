@@ -1,12 +1,16 @@
 import { register } from '@treenity/core/core';
-import { type View } from '@treenity/react/context';
-import { usePath, useChildren } from '@treenity/react/hooks';
+import { Render, type View } from '@treenity/react/context';
+import { useChildren, usePath } from '@treenity/react/hooks';
 import { Button } from '@treenity/react/ui/button';
 import { Input } from '@treenity/react/ui/input';
 import { useState } from 'react';
 import {
-  ExampleCounter, ExampleTodoList, ExampleTodoItem,
-  ExamplePoll, ExampleShowcase, ExampleTicker,
+  ExampleCounter,
+  ExamplePoll,
+  ExampleShowcase,
+  ExampleTicker,
+  ExampleTodoItem,
+  ExampleTodoList,
 } from './types';
 
 // ── Counter View ──
@@ -177,7 +181,7 @@ register('example.ticker', 'react', TickerView);
 
 // ── Showcase Root View ──
 
-const DEMOS: Record<string, { label: string; desc: string }> = {
+const LABELS: Record<string, { label: string; desc: string }> = {
   'example.counter':   { label: 'Counter',   desc: 'Simplest type + actions' },
   'example.todo.list': { label: 'Todo List',  desc: 'Children + useChildren' },
   'example.poll':      { label: 'Poll',       desc: 'State machine + validation' },
@@ -196,15 +200,15 @@ const ShowcaseView: View<ExampleShowcase> = ({ value, ctx }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {children.map(child => {
-          const demo = DEMOS[child.$type];
-          if (!demo) return null;
+          const info = LABELS[child.$type];
+          if (!info) return null;
           return (
             <div key={child.$path} className="border rounded-lg p-5 space-y-3">
               <div>
-                <h2 className="font-semibold">{demo.label}</h2>
-                <p className="text-xs text-muted-foreground">{demo.desc}</p>
+                <h2 className="font-semibold">{info.label}</h2>
+                <p className="text-xs text-muted-foreground">{info.desc}</p>
               </div>
-              <ChildDemo value={child} />
+              <Render value={child} />
             </div>
           );
         })}
@@ -213,19 +217,3 @@ const ShowcaseView: View<ExampleShowcase> = ({ value, ctx }) => {
   );
 };
 register('example.showcase', 'react', ShowcaseView);
-
-// Render child demo — delegates to registered view via usePath
-function ChildDemo({ value }: { value: { $path: string; $type: string } }) {
-  const VIEW_MAP: Record<string, View<any>> = {
-    'example.counter': CounterView,
-    'example.todo.list': TodoListView,
-    'example.poll': PollView,
-    'example.ticker': TickerView,
-  };
-  const View = VIEW_MAP[value.$type];
-  if (!View) return null;
-  return <View value={value as any} ctx={{ node: value as any, path: value.$path, execute: async (action, data) => {
-    const { tree } = await import('@treenity/react/hooks');
-    // Fallback: use usePath proxy in each view for actions
-  }}} />;
-}
