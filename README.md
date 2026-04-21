@@ -19,8 +19,8 @@ Single process: Vite 8 frontend + Treenity server on :3211.
 
 ```
 starter/
-├── data/base/       seed tree (FS mount)
-├── data/work/       runtime data (overlay, gitignored)
+├── tree/seed/      seed tree (checked in)
+├── tree/work/      runtime overlay (gitignored, commit for snapshot)
 ├── mods/            local mods
 ├── src/main.tsx     frontend entry
 ├── root.json        server config

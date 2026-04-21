@@ -15,8 +15,6 @@ bundle
 *.sqlite
 *.db
 
-/data/work
-
 temp
 *.tgz
 /dist-front

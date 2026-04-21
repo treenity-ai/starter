@@ -18,8 +18,8 @@ RUN chmod +x entrypoint.sh
 # Tenant mods dir scanned at runtime
 ENV PORT=3211
 ENV STATIC_DIR=/app/dist-front
-ENV MODS_DIR=/app/data/mods
+ENV MODS_DIR=/app/tree/mods
 EXPOSE 3211
-VOLUME /app/data
+VOLUME /app/tree
 
 CMD ["./entrypoint.sh"]

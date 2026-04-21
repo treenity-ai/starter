@@ -3,7 +3,7 @@ node_modules
 .git
 **/.git
 dist-front
-data/work
+tree/work
 engine
 *.log
 *.tgz
