@@ -1,6 +1,6 @@
 import { register } from '@treenity/core';
 import { usePath } from '@treenity/react/hooks';
-import { trpc } from '@treenity/react/trpc';
+import { trpc } from '@treenity/react/tree/trpc';
 import { Badge } from '@treenity/react/ui/badge';
 import { Button } from '@treenity/react/ui/button';
 import { Input } from '@treenity/react/ui/input';
